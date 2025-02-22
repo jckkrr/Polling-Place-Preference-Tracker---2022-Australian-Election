@@ -169,7 +169,7 @@ df_prefdist = prefdist(chosen_df, chosen_state, chosen_electorate, chosen_pollin
 
 plotter(chosen_df, chosen_state, chosen_electorate, chosen_pollingplace)
 
-st.table(df_prefdist.style.format("{:,.0f}")) #.bar(subset=df_prefdist.columns, color='lightgreen'))
+#st.table(df_prefdist.style.format("{:,.0f}")) #.bar(subset=df_prefdist.columns, color='lightgreen'))
 st.table(df_prefdist.style.format("{:,.0f}").bar(subset=df_prefdist.columns, color='lightgreen'))
 
 
