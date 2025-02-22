@@ -129,7 +129,7 @@ st.write('Because all politics is local.')
 
 ### 
 
-chosen_pollingplace = '*** ALL ***'
+chosen_pollingplace = '* ALL *'
 
 df_MAIN = pd.read_csv('https://raw.githubusercontent.com/jckkrr/Polling-Place-Preference-Tracker---2022-Australian-Election/refs/heads/main/data/2022%20Australian%20Election%20AEC%20Data%20-%20HouseDopByDivisionDownload-27966.csv', skiprows = 0, header = 1)
 
@@ -143,24 +143,23 @@ with col2:
     chosen_electorate = st.selectbox('Electorate:', (state_electorates))
     chosen_df = df_state
 with col3:
-    electorate_pollingplaces = ['*** ALL ***']
+    electorate_pollingplaces = ['* ALL *']
     
-    electorate_files = {
-        'Cooper': 'VIC-COOP',
-        'Wannon': 'VIC-WANN',
-        'Wills': 'VIC-WILL', 
-    }
+    if chosen_state == 'VIC':  ### !!!!!!
+        electorate_files = {chosen_electorate: f'VIC-{chosen_electorate.upper()[0:4]}'}        
+    else: 
+        electorate_files = {}
     
     if chosen_electorate in electorate_files.keys():
 
-        df_electorate = pd.read_csv(f'https://raw.githubusercontent.com/jckkrr/Polling-Place-Preference-Tracker---2022-Australian-Election/refs/heads/main/data/HouseDopByPPDownload-27966-{electorate_files[chosen_electorate]}.csv', skiprows = 0, header = 1)
-    
+        electorate_preferences_file = f'http://constituent.online/parli/aec_data/australia/australia/2022/HouseDopByPPDownload-27966-VIC/HouseDopByPPDownload-27966-{electorate_files[chosen_electorate]}.csv'
+        df_electorate = pd.read_csv(electorate_preferences_file, skiprows = 0, header = 1)
+        
         electorate_pollingplaces = list(df_electorate['PPNm'].unique())
-        electorate_pollingplaces.insert(0, '*** ALL ***')
+        electorate_pollingplaces.insert(0, '* ALL *')
         
         chosen_pollingplace = st.selectbox('Polling Place:', (electorate_pollingplaces))
-        
-        if chosen_pollingplace != '*** ALL ***':
+        if chosen_pollingplace != '* ALL *':
             chosen_df = df_electorate.loc[df_electorate['PPNm'] == chosen_pollingplace]
             
             
@@ -188,11 +187,3 @@ s.set_table_styles([cell_hover, index_names, headers])
 st.table(s.set_table_styles([cell_hover, index_names, headers]))
 
 ### keep the font size very small. although it doesnt actually show up in the deployed streamlit app, it stops the columns from bunching up when there are more than 5 counts. 
-
-
-
-#def color_survived(val):
-#    color = f'rgba({val/255},25,222,0.3)' if val else '#181818'
-#    return f'background-color: {color}'
-#st.table(df_prefdist.style.format("{:,.0f}").applymap(color_survived, subset=[x for x in df_prefdist.columns]))
-
