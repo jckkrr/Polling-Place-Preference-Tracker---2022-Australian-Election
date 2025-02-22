@@ -153,7 +153,7 @@ with col3:
     
     if chosen_electorate in electorate_files.keys():
 
-        df_electorate = pd.read_csv(f'https://raw.githubusercontent.com/jckkrr/Polling-Place-Preference-Tracker---2022-Australian-Election/refs/heads/main/HouseDopByPPDownload-27966-{electorate_files[chosen_electorate]}.csv', skiprows = 0, header = 1)
+        df_electorate = pd.read_csv(f'https://raw.githubusercontent.com/jckkrr/Polling-Place-Preference-Tracker---2022-Australian-Election/refs/heads/main/data/HouseDopByPPDownload-27966-{electorate_files[chosen_electorate]}.csv', skiprows = 0, header = 1)
     
         electorate_pollingplaces = list(df_electorate['PPNm'].unique())
         electorate_pollingplaces.insert(0, '*** ALL ***')
