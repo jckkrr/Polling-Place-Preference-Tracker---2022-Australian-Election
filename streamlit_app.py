@@ -169,8 +169,10 @@ df_prefdist = prefdist(chosen_df, chosen_state, chosen_electorate, chosen_pollin
 
 plotter(chosen_df, chosen_state, chosen_electorate, chosen_pollingplace)
 
-def color_survived(val):
-    color = f'rgba({val/255},25,222,0.3)' if val else '#181818'
-    return f'background-color: {color}'
-st.dataframe(df_prefdist.style.format("{:,.0f}").applymap(color_survived, subset=[x for x in df_prefdist.columns]), width = 800)
+st.table(df_prefdist.style.format("{:,.0f}").bar(subset=df_prefdist.columns, color='lightgreen'))
+
+#def color_survived(val):
+#    color = f'rgba({val/255},25,222,0.3)' if val else '#181818'
+#    return f'background-color: {color}'
+#st.table(df_prefdist.style.format("{:,.0f}").applymap(color_survived, subset=[x for x in df_prefdist.columns]))
 
