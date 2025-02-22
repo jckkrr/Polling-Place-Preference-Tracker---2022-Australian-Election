@@ -21,9 +21,8 @@ headers = {
     "content-type": "application/json"
 }
 
-css = 'body, p, h1, .st-emotion-cache-1104ytp h1, [class*="css"] {font-family: "Inter", sans-serif;}'
+css = 'body, html, p, h1, .st-emotion-cache-1104ytp h1, [class*="css"] {font-family: "Inter", sans-serif;} tbody {font-size: 10px}'
 st.markdown( f'<style>{css}</style>' , unsafe_allow_html= True)
-
 
 
 ### ---------------------------------------- FUNCTIONS 
