@@ -162,7 +162,9 @@ with col3:
         if chosen_pollingplace != '* ALL *':
             chosen_df = df_electorate.loc[df_electorate['PPNm'] == chosen_pollingplace]
             
-            
+            party_font_size = 10 - st.write(chosen_df['CountNum'].max())
+            if party_font_size <= 0:
+                party_font_size = 1
             
 df_prefdist = prefdist(chosen_df, chosen_state, chosen_electorate, chosen_pollingplace)
 
@@ -180,7 +182,7 @@ index_names = {
 }
 headers = {
     'selector': 'th:not(.index_name)',
-    'props': 'background-color: #fefefe; color: #181818; font-size: 4px; text-align:right; font-weight: bold'
+    'props': f'background-color: #fefefe; color: #181818; font-size: {party_font_size}px; text-align:right; font-weight: bold'
 }
 s = df_prefdist.style.set_properties(**{'font-size': '7px'}).format("{:,.0f}").bar(subset=df_prefdist.columns, color='lightgreen')
 s.set_table_styles([cell_hover, index_names, headers])
