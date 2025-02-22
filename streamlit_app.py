@@ -169,7 +169,7 @@ df_prefdist = prefdist(chosen_df, chosen_state, chosen_electorate, chosen_pollin
 
 plotter(chosen_df, chosen_state, chosen_electorate, chosen_pollingplace)
 
-#st.table(df_prefdist.style.format("{:,.0f}"))
+st.table(df_prefdist.style.format("{:,.0f}"))
 
 cell_hover = {  # for row hover use <tr> instead of <td>
     'selector': 'td:hover',
