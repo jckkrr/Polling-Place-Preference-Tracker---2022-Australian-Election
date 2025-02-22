@@ -169,8 +169,7 @@ df_prefdist = prefdist(chosen_df, chosen_state, chosen_electorate, chosen_pollin
 
 plotter(chosen_df, chosen_state, chosen_electorate, chosen_pollingplace)
 
-df_blank = pd.DataFrame()
-st.table(df_blank)
+st.table(df_prefdist.style.format("{:,.0f}"))
 st.table(df_prefdist.style.format("{:,.0f}").bar(subset=df_prefdist.columns, color='lightgreen'))
 
 
