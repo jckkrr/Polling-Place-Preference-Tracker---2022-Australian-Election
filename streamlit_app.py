@@ -11,7 +11,6 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
-st.set_page_config(layout="wide")
 
 import customChartDefaultStyling
 
@@ -21,9 +20,6 @@ pd.set_option('display.max_columns', None)
 headers = {
     "content-type": "application/json"
 }
-
-css = 'body, html, p, h1, .st-emotion-cache-1104ytp h1, [class*="css"] {font-family: "Inter", sans-serif;}'
-st.markdown( f'<style>{css}</style>' , unsafe_allow_html= True)
 
 css = 'body, html, p, h1, .st-emotion-cache-1104ytp h1, [class*="css"] {font-family: "Inter", sans-serif;}'
 st.markdown( f'<style>{css}</style>' , unsafe_allow_html= True)
