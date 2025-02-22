@@ -130,6 +130,7 @@ st.write('Because all politics is local.')
 ### 
 
 chosen_pollingplace = '* ALL *'
+party_font_size = 5
 
 df_MAIN = pd.read_csv('https://raw.githubusercontent.com/jckkrr/Polling-Place-Preference-Tracker---2022-Australian-Election/refs/heads/main/data/2022%20Australian%20Election%20AEC%20Data%20-%20HouseDopByDivisionDownload-27966.csv', skiprows = 0, header = 1)
 
