@@ -181,7 +181,7 @@ index_names = {
 }
 headers = {
     'selector': 'th:not(.index_name)',
-    'props': 'background-color: #fefefe; color: #181818; font-size: 1px; text-align:right; font-weight: bold'
+    'props': 'background-color: #fefefe; color: #181818; font-size: 4px; text-align:right; font-weight: bold'
 }
 s = df_prefdist.style.set_properties(**{'font-size': '7px'}).format("{:,.0f}").bar(subset=df_prefdist.columns, color='lightgreen')
 s.set_table_styles([cell_hover, index_names, headers])
