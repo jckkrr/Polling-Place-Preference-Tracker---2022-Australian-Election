@@ -108,7 +108,7 @@ def plotter(chosen_df, chosen_state, chosen_electorate, chosen_pollingplace):
         )
                 
         
-    fig.update_layout(title = f'<b>{chosen_electorate} ({chosen_state}) - {chosen_pollingplace}</b><br><sup>party tally through the preference distributions</sup>')
+    fig.update_layout(title = f'<b>{chosen_electorate} ({chosen_state}) - {chosen_pollingplace}</b><br><sup>Party tallies through the preference distributions</sup>')
     customChartDefaultStyling.styling(fig)
     fig.update_layout(width = 1200, height = 600)
     fig.update_xaxes(title = '<b>Counts</b>', tickangle = 0)
