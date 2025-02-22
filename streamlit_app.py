@@ -130,7 +130,6 @@ st.write('Because all politics is local.')
 ### 
 
 chosen_pollingplace = '* ALL *'
-party_font_size = 5
 
 df_MAIN = pd.read_csv('https://raw.githubusercontent.com/jckkrr/Polling-Place-Preference-Tracker---2022-Australian-Election/refs/heads/main/data/2022%20Australian%20Election%20AEC%20Data%20-%20HouseDopByDivisionDownload-27966.csv', skiprows = 0, header = 1)
 
@@ -162,10 +161,7 @@ with col3:
         chosen_pollingplace = st.selectbox('Polling Place:', (electorate_pollingplaces))
         if chosen_pollingplace != '* ALL *':
             chosen_df = df_electorate.loc[df_electorate['PPNm'] == chosen_pollingplace]
-            
-            party_font_size = 10 - st.write(chosen_df['CountNum'].max())
-            if party_font_size <= 0:
-                party_font_size = 1
+        
             
 df_prefdist = prefdist(chosen_df, chosen_state, chosen_electorate, chosen_pollingplace)
 
@@ -183,9 +179,9 @@ index_names = {
 }
 headers = {
     'selector': 'th:not(.index_name)',
-    'props': f'background-color: #fefefe; color: #181818; font-size: {party_font_size}px; text-align:right; font-weight: bold'
+    'props': f'background-color: #fefefe; color: #181818; font-size: 1px; text-align:right; font-weight: bold'
 }
-s = df_prefdist.style.set_properties(**{'font-size': '7px'}).format("{:,.0f}").bar(subset=df_prefdist.columns, color='lightgreen')
+s = df_prefdist.style.set_properties(**{'font-size': '1px'}).format("{:,.0f}").bar(subset=df_prefdist.columns, color='lightgreen')
 s.set_table_styles([cell_hover, index_names, headers])
 st.table(s.set_table_styles([cell_hover, index_names, headers]))
 
