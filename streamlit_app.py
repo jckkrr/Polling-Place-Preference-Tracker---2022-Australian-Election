@@ -185,7 +185,7 @@ headers = {
     'selector': 'th:not(.index_name)',
     'props': f'background-color: #fefefe; color: #181818; font-size: {party_font_size}px; text-align:right; font-weight: bold'
 }
-s = df_prefdist.style.set_properties(**{'font-size': '7px'}).format("{:,.0f}").bar(subset=df_prefdist.columns, color='lightgreen')
+s = df_prefdist.style.set_properties(**{'font-size': party_font_size}).format("{:,.0f}").bar(subset=df_prefdist.columns, color='lightgreen')
 s.set_table_styles([cell_hover, index_names, headers])
 st.table(s.set_table_styles([cell_hover, index_names, headers]))
 
