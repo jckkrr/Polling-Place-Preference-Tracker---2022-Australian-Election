@@ -131,7 +131,7 @@ st.write('Because all politics is local.')
 
 chosen_pollingplace = '*** ALL ***'
 
-df_MAIN = pd.read_csv('https://raw.githubusercontent.com/jckkrr/Polling-Place-Preference-Tracker---2022-Australian-Election/refs/heads/main/2022%20Australian%20Election%20AEC%20Data%20-%20HouseDopByDivisionDownload-27966.csv', skiprows = 0, header = 1)
+df_MAIN = pd.read_csv('https://raw.githubusercontent.com/jckkrr/Polling-Place-Preference-Tracker---2022-Australian-Election/refs/heads/main/data/2022%20Australian%20Election%20AEC%20Data%20-%20HouseDopByDivisionDownload-27966.csv', skiprows = 0, header = 1)
 
 col1, col2, col3 = st.columns([1,2,3])
 with col1: 
@@ -170,6 +170,8 @@ df_prefdist = prefdist(chosen_df, chosen_state, chosen_electorate, chosen_pollin
 plotter(chosen_df, chosen_state, chosen_electorate, chosen_pollingplace)
 
 st.table(df_prefdist.style.format("{:,.0f}")) #.bar(subset=df_prefdist.columns, color='lightgreen'))
+st.table(df_prefdist.style.format("{:,.0f}").bar(subset=df_prefdist.columns, color='lightgreen'))
+
 
 #def color_survived(val):
 #    color = f'rgba({val/255},25,222,0.3)' if val else '#181818'
