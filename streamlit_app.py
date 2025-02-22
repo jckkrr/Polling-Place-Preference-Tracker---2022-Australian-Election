@@ -173,7 +173,7 @@ plotter(chosen_df, chosen_state, chosen_electorate, chosen_pollingplace)
 
 cell_hover = {  # for row hover use <tr> instead of <td>
     'selector': 'td:hover',
-    'props': [('background-color', '#ffffb3')]
+    'props': [('background-color', 'aqua')]
 }
 index_names = {
     'selector': '.index_name',
