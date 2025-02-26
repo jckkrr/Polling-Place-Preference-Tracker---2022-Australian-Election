@@ -27,38 +27,51 @@ st.markdown( f'<style>{css}</style>' , unsafe_allow_html= True)
 
 ### ---------------------------------------- FUNCTIONS 
 
+def frame_name_clean(df):
+    
+    df = df.rename(columns = {'CountNumber': 'CountNum'})
+       
+    update_party_names = pd.read_csv('https://raw.githubusercontent.com/jckkrr/Polling-Place-Preference-Tracker---2022-Australian-Election/refs/heads/main/update_party_names.csv').to_dict()
+    update_party_names = dict(zip(update_party_names['OldNm'].values(), update_party_names['NewNm'].values()))
+        
+    if 'PartyNm' in df.columns:
+        for party_name in update_party_names.keys():
+            df.PartyNm = np.where(df.PartyNm == party_name, update_party_names[party_name], df.PartyNm)
+    df['PartyNm'] = np.where(df['PartyNm'] == 'Independent', ' ' + df['GivenNm'] + ' ' + df['Surname'] + ' (IND)', df['PartyNm'])
+        
+    update_party_abbreviations = pd.read_csv('https://raw.githubusercontent.com/jckkrr/Polling-Place-Preference-Tracker---2022-Australian-Election/refs/heads/main/update_party_abbreviations.csv').to_dict()
+    update_party_abbreviations = dict(zip(update_party_abbreviations['OldAb'].values(), update_party_abbreviations['NewAb'].values()))
+    if 'PartyAb' in df.columns:
+        for party_ab in update_party_abbreviations.keys():
+            df.PartyAb = np.where(df.PartyAb == party_ab, update_party_abbreviations[party_ab], df.PartyAb)
+    df['PartyAb'] = np.where(df['PartyAb'] == 'IND', 'IND' + '_' + df['Surname'].str.replace(' ','').str[0:4], df['PartyAb'])
+
+    return df
+
+
 def twoparty_prefdist_horizontalbar_base(chosen_state, chosen_electorate, chosen_pollingplace, tiered_base):
 
     ### Assemble the data
     
     df_MAIN_electorate = df_MAIN.copy().loc[(df_MAIN['StateAb'] == chosen_state) & (df_MAIN['DivisionNm'] == chosen_electorate)]
     df_MAIN_electorate['PartyAb'] = np.where(df_MAIN_electorate['PartyAb'] == 'IND', 'IND' + '_' + df_MAIN_electorate['Surname'].str[0:4], df_MAIN_electorate['PartyAb'])
-    df_MAIN_electorate_countmax = df_MAIN_electorate['CountNumber'].max()
-    last_two_parties = df_MAIN_electorate.loc[(df_MAIN_electorate['CountNumber'] == df_MAIN_electorate_countmax) & (df_MAIN_electorate['CalculationType'] == 'Preference Count') & (df_MAIN_electorate['CalculationValue'] > 0)].sort_values(by = 'CalculationValue', ascending = False)['PartyAb'].values.tolist()
+    df_MAIN_electorate_countmax = df_MAIN_electorate['CountNum'].max()
+    last_two_parties = df_MAIN_electorate.loc[(df_MAIN_electorate['CountNum'] == df_MAIN_electorate_countmax) & (df_MAIN_electorate['CalculationType'] == 'Preference Count') & (df_MAIN_electorate['CalculationValue'] > 0)].sort_values(by = 'CalculationValue', ascending = False)['PartyAb'].values.tolist()
     last_two_parties = list(reversed(last_two_parties))  ### So the winner goes on top
         
     ##
     
     if chosen_pollingplace == 'ALL':
         df_electorate = df_MAIN_electorate
-        df_electorate = df_electorate.rename(columns = {'CountNumber': 'CountNum'})
-        df_electorate['PPNm'] = 'ALL'        
+        df_electorate['PPNm'] = 'ALL'     
         
     else:    
         electorate_file_slug = f'{chosen_state}-{chosen_electorate.upper()[0:4]}'
         electorate_file = f'http://constituent.online/parli/aec_data/australia/australia/2022/HouseDopByPPDownload-27966-VIC/HouseDopByPPDownload-27966-{electorate_file_slug}.csv'
         df_electorate = pd.read_csv(electorate_file, skiprows = 0, header = 1)  
     
-    df_electorate['PartyAb'] = np.where(df_electorate['PartyAb'] == 'IND', 'IND' + '_' + df_electorate['Surname'].str[0:4], df_electorate['PartyAb'])
+    df_electorate = frame_name_clean(df_electorate)
         
-    party_colors_base = {
-        'ALP': 'red', 
-        'LP': 'blue',
-        'GVIC': 'green', 
-        'UAPP': 'yellow',
-        'ON': 'orange',
-    }
-
     party_colors = dict(zip(pd.read_csv('https://raw.githubusercontent.com/jckkrr/Polling-Place-Preference-Tracker---2022-Australian-Election/refs/heads/main/party_colors.csv')['p'], pd.read_csv('https://raw.githubusercontent.com/jckkrr/Polling-Place-Preference-Tracker---2022-Australian-Election/refs/heads/main/party_colors.csv')['c']))
     for party in df_electorate['PartyAb'].unique():
         if party not in party_colors.keys():
@@ -66,7 +79,9 @@ def twoparty_prefdist_horizontalbar_base(chosen_state, chosen_electorate, chosen
                 
     legend_text = ''
     for party in party_colors.keys():
-        legend_text += f'<span style="color: {party_colors[party]}">&#x25AE;</span> {party}  '
+        if party in df_electorate.PartyAb.unique():
+            legend_text += f'<span style="color: {party_colors[party]}">&#x25AE;</span> {party}  '
+    
     
     #### Construct the plot dataframe
     
@@ -117,7 +132,7 @@ def twoparty_prefdist_horizontalbar_base(chosen_state, chosen_electorate, chosen
     fig.update_layout(title = f'<b>{chosen_electorate} | {chosen_pollingplace.title()}</b> | Preference distribution, 2022 Australia election  <br><span style="font-size: 75%">{legend_text}</span>')
     customChartDefaultStyling.styling(fig)
     fig.update_layout(showlegend=False)
-    fig.update_layout(width = 1000, height = 300)
+    fig.update_layout(width = 1000, height = 250)
     fig.update_layout(bargap=0.6)
     
     st.plotly_chart(fig, use_container_width=True)
@@ -216,6 +231,7 @@ st.write('Because all politics is local.')
 chosen_pollingplace = 'ALL'
 
 df_MAIN = pd.read_csv('https://raw.githubusercontent.com/jckkrr/Polling-Place-Preference-Tracker---2022-Australian-Election/refs/heads/main/data/2022%20Australian%20Election%20AEC%20Data%20-%20HouseDopByDivisionDownload-27966.csv', skiprows = 0, header = 1)
+df_MAIN = frame_name_clean(df_MAIN)
 
 col1, col2, col3, col4 = st.columns([1,2,3,1])
 with col1: 
