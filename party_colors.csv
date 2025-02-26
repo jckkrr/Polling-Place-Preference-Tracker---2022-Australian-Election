@@ -1,6 +1,8 @@
 p,c
 ALP,red
-LP,blue
-GVIC,green
-UAPP,yellow
-ON,orange
+LIB,blue
+NAT,darkgreen
+CLP,"rgb(204, 119, 34)"
+GRN,green
+UAP,yellow
+ONE,orange
