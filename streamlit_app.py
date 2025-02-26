@@ -27,22 +27,123 @@ st.markdown( f'<style>{css}</style>' , unsafe_allow_html= True)
 
 ### ---------------------------------------- FUNCTIONS 
 
-def prefdist(chosen_df, chosen_state, chosen_electorate, chosen_pollingplace):
+def twoparty_prefdist_horizontalbar_base(chosen_state, chosen_electorate, chosen_pollingplace, tiered_base):
 
+    ### Assemble the data
+    
+    df_MAIN_electorate = df_MAIN.copy().loc[(df_MAIN['StateAb'] == chosen_state) & (df_MAIN['DivisionNm'] == chosen_electorate)]
+    df_MAIN_electorate['PartyAb'] = np.where(df_MAIN_electorate['PartyAb'] == 'IND', 'IND' + '_' + df_MAIN_electorate['Surname'].str[0:4], df_MAIN_electorate['PartyAb'])
+    df_MAIN_electorate_countmax = df_MAIN_electorate['CountNumber'].max()
+    last_two_parties = df_MAIN_electorate.loc[(df_MAIN_electorate['CountNumber'] == df_MAIN_electorate_countmax) & (df_MAIN_electorate['CalculationType'] == 'Preference Count') & (df_MAIN_electorate['CalculationValue'] > 0)].sort_values(by = 'CalculationValue', ascending = False)['PartyAb'].values.tolist()
+    last_two_parties = list(reversed(last_two_parties))  ### So the winner goes on top
+        
+    ##
+    
+    if chosen_pollingplace == 'ALL':
+        df_electorate = df_MAIN_electorate
+        df_electorate = df_electorate.rename(columns = {'CountNumber': 'CountNum'})
+        df_electorate['PPNm'] = 'ALL'        
+        
+    else:    
+        electorate_file_slug = f'{chosen_state}-{chosen_electorate.upper()[0:4]}'
+        electorate_file = f'http://constituent.online/parli/aec_data/australia/australia/2022/HouseDopByPPDownload-27966-VIC/HouseDopByPPDownload-27966-{electorate_file_slug}.csv'
+        df_electorate = pd.read_csv(electorate_file, skiprows = 0, header = 1)  
+    
+    df_electorate['PartyAb'] = np.where(df_electorate['PartyAb'] == 'IND', 'IND' + '_' + df_electorate['Surname'].str[0:4], df_electorate['PartyAb'])
+        
+    party_colors_base = {
+        'ALP': 'red', 
+        'LP': 'blue',
+        'GVIC': 'green', 
+        'UAPP': 'yellow',
+        'ON': 'orange',
+    }
+
+    party_colors = dict(zip(pd.read_csv('https://raw.githubusercontent.com/jckkrr/Polling-Place-Preference-Tracker---2022-Australian-Election/refs/heads/main/party_colors.csv')['p'], pd.read_csv('https://raw.githubusercontent.com/jckkrr/Polling-Place-Preference-Tracker---2022-Australian-Election/refs/heads/main/party_colors.csv')['c']))
+    for party in df_electorate['PartyAb'].unique():
+        if party not in party_colors.keys():
+            party_colors[party] = 'silver'
+                
+    legend_text = ''
+    for party in party_colors.keys():
+        legend_text += f'<span style="color: {party_colors[party]}">&#x25AE;</span> {party}  '
+    
+    #### Construct the plot dataframe
+    
+    fig = go.Figure() 
+
+    df_plot = pd.DataFrame(columns = ['CountNum', 'PartyAb' ,'VotesAdded', 'VotesTakenFrom'])
+    df_x = df_electorate.loc[(df_electorate.PPNm == chosen_pollingplace) & (df_electorate.PartyAb.isin(last_two_parties)) & (df_electorate.CalculationType.isin(['Preference Count', 'Transfer Count']))]
+        
+    for partyab in last_two_parties:
+
+        for count in range(0, df_electorate.CountNum.max() + 1):
+            countvotetype = 'Preference Count' if count == 0 else 'Transfer Count'
+            votesadded = df_x.loc[(df_electorate.PartyAb == partyab) & (df_x.CountNum == count) & (df_x.CalculationType == countvotetype), 'CalculationValue'].values[0].astype(int)    
+            votestakenfrom = partyab if count == 0 else df_electorate.loc[(df_electorate.PPNm == chosen_pollingplace) & (df_electorate.CountNum == count) & (df_electorate.CalculationType == 'Transfer Percent') & (df_electorate.CalculationValue == -100.00), 'PartyAb'].values[0]
+            df_plot.loc[df_plot.shape[0]] = count, partyab, votesadded, votestakenfrom
+
+    count_maxes = {}
+    start_positions = {}
+    for count in range(0, df_electorate.CountNum.max() + 1):
+        m = df_plot.loc[df_plot.CountNum == count, 'VotesAdded'].max()
+        count_maxes[count] = m
+        if count == 0:
+            start_positions[count] = 0
+        if count > 0:
+            start_positions[count] = count_maxes[count-1] + start_positions[count-1]
+
+
+    ## Get ready to plot
+
+    for partyab in last_two_parties:
+        df_plot_party = df_plot.copy().loc[df_plot['PartyAb'] == partyab]
+        df_plot_party['StartPosition'] = start_positions.values()
+        df_plot_party['VotesTally'] = df_plot_party['VotesAdded'].cumsum()
+        df_plot_party['color'] = df_plot_party['VotesTakenFrom'].apply(lambda x: party_colors[x])
+
+        fig.add_trace(
+            go.Bar(
+                name = partyab,
+                orientation='h',
+                y = df_plot_party['PartyAb'],
+                x = df_plot_party['VotesAdded'], 
+                base = None if tiered_base is False else df_plot_party['StartPosition'],
+                marker = dict(color = df_plot_party['color']),
+                width = 1.2
+            )
+        )
+
+    fig.update_layout(title = f'<b>{chosen_electorate} | {chosen_pollingplace.title()}</b> | Preference distribution, 2022 Australia election  <br><span style="font-size: 75%">{legend_text}</span>')
+    customChartDefaultStyling.styling(fig)
+    fig.update_layout(showlegend=False)
+    fig.update_layout(width = 1000, height = 300)
+    fig.update_layout(bargap=0.6)
+    
+    st.plotly_chart(fig, use_container_width=True)
+    
+    
+    ########################################
+    ########################################
+    ########################################
+    #### Chase chart #######################
+    ########################################
+    ########################################
+    
     df_prefdist = pd.DataFrame()
             
-    df_analysis = chosen_df.copy().loc[(chosen_df.StateAb == chosen_state) & (chosen_df.DivisionNm == chosen_electorate)] 
-    df_analysis['PartyAb'] = np.where(df_analysis['PartyAb'] == 'IND', 'IND' + '_' + df_analysis['Surname'].str[0:4], df_analysis['PartyAb'])    
-   
+    df_analysis = df_electorate.copy().loc[(df_electorate.StateAb == chosen_state) & (df_electorate.DivisionNm == chosen_electorate)] 
+    df_analysis['PartyAb'] = np.where(df_analysis['PartyAb'] == 'IND', 'IND' + '_' + df_analysis['Surname'].str[0:4], df_analysis['PartyAb'])
+            
     parties = df_analysis['PartyAb'].unique()
-    count_col = 'CountNum' if 'CountNum' in df_analysis.columns else 'CountNumber'
-    counts = df_analysis[count_col].unique()
+    
+    counts = df_analysis['CountNum'].unique()
 
     for count in counts:
 
-        df_count = df_analysis.loc[(df_analysis[count_col] == count) & (df_analysis.CalculationType == 'Preference Count')]
-        df_count = df_count.sort_values(by = 'CalculationValue', ascending = False)        
-        
+        df_count = df_analysis.loc[(df_analysis['CountNum'] == count) & (df_analysis.CalculationType == 'Preference Count')]
+        df_count = df_count.sort_values(by = 'CalculationValue', ascending = False)
+                
         for party in parties:        
             cv = df_count.loc[df_count['PartyAb'] == party, 'CalculationValue'].values[0]            
             df_prefdist.loc[party, count] = cv
@@ -53,34 +154,16 @@ def prefdist(chosen_df, chosen_state, chosen_electorate, chosen_pollingplace):
     cols.reverse()
     df_prefdist = df_prefdist.sort_values(by = cols, ascending = False)
    
-    return df_prefdist
 
-
-def plotter(chosen_df, chosen_state, chosen_electorate, chosen_pollingplace):
+    df_fill_colour = df_prefdist.copy()
+    df_fill_colour = df_fill_colour / df_fill_colour.max()
     
-    df_prefdist = prefdist(chosen_df, chosen_state, chosen_electorate, chosen_pollingplace)
-    
-    df_analysis = chosen_df.copy().loc[(chosen_df.StateAb == chosen_state) & (chosen_df.DivisionNm == chosen_electorate)] 
-    df_analysis['PartyAb'] = np.where(df_analysis['PartyAb'] == 'IND', 'IND' + '_' + df_analysis['Surname'].str[0:4], df_analysis['PartyAb'])
+    for col in df_fill_colour.columns:
+        df_fill_colour[col] = df_fill_colour[col].apply(lambda x: f'rgba({x*255},25, 222, 0.2)')
         
-    parties = df_analysis['PartyAb'].unique()
-    count_col = 'CountNum' if 'CountNum' in df_analysis.columns else 'CountNumber'
-    counts = df_analysis[count_col].unique()
+    fig2 = go.Figure() 
 
-    party_colors = {
-        
-        'ALP': 'maroon',
-        'LP': 'blue',
-        'LNP': 'blue',
-        'NAT': 'darkgreen',
-        'CLP': 'darkgreen',
-        'GVIC': 'green', 
-        'GRN': 'green'
-
-    }
     
-    fig = go.Figure() 
-        
     for party in parties:
                 
         values = [x if x != 0 else None for x in df_prefdist.loc[party]]
@@ -89,7 +172,7 @@ def plotter(chosen_df, chosen_state, chosen_electorate, chosen_pollingplace):
         if party in party_colors.keys():
             color = party_colors[party]
         
-        fig.add_trace(
+        fig2.add_trace(
             go.Scatter(
                 
                 mode = 'markers+lines',
@@ -109,16 +192,16 @@ def plotter(chosen_df, chosen_state, chosen_electorate, chosen_pollingplace):
         )
                 
         
-    fig.update_layout(title = f'<b>{chosen_electorate} ({chosen_state}) - {chosen_pollingplace}</b><br><sup>Party tallies through the preference distributions</sup>')
-    customChartDefaultStyling.styling(fig)
-    fig.update_layout(width = 1200, height = 600)
-    fig.update_xaxes(title = '<b>Counts</b>', tickangle = 0)
-    fig.update_yaxes(title = '<b>Votes</b>')
-    fig.update_layout(legend=dict(orientation='h', font = dict(size = 10, color = "#181818")))
-    fig.update_layout(legend={'y':-0.1,'x':0,'xanchor': 'left','yanchor': 'top'})
+    #fig2.update_layout(title = f'The chase for {chosen_electorate} ({chosen_pollingplace})')
+    fig2.update_layout(title = ' ')
+    customChartDefaultStyling.styling(fig2)
+    fig2.update_layout(width = 1000, height = 300)
+    fig2.update_xaxes(title = '<b>Counts</b>', tickangle = 0)
+    fig2.update_yaxes(title = '<b>Votes</b>')
+    fig2.update_layout(showlegend= False)
 
-    st.plotly_chart(fig, use_container_width=True)
-                
+    st.plotly_chart(fig2, use_container_width=True)
+
 
 ### _________________________________________ RUN
 
@@ -130,11 +213,11 @@ st.write('Because all politics is local.')
 
 ### 
 
-chosen_pollingplace = '* ALL *'
+chosen_pollingplace = 'ALL'
 
 df_MAIN = pd.read_csv('https://raw.githubusercontent.com/jckkrr/Polling-Place-Preference-Tracker---2022-Australian-Election/refs/heads/main/data/2022%20Australian%20Election%20AEC%20Data%20-%20HouseDopByDivisionDownload-27966.csv', skiprows = 0, header = 1)
 
-col1, col2, col3 = st.columns([1,2,3])
+col1, col2, col3, col4 = st.columns([1,2,3,1])
 with col1: 
     states = df_MAIN['StateAb'].unique() 
     chosen_state = st.selectbox('State:', (states))
@@ -142,9 +225,8 @@ with col1:
 with col2: 
     state_electorates = df_state['DivisionNm'].unique()
     chosen_electorate = st.selectbox('Electorate:', (state_electorates))
-    chosen_df = df_state
 with col3:
-    electorate_pollingplaces = ['* ALL *']
+    electorate_pollingplaces = ['ALL']
     
     if chosen_state == 'VIC':  ### !!!!!!
         electorate_files = {chosen_electorate: f'VIC-{chosen_electorate.upper()[0:4]}'}        
@@ -157,33 +239,13 @@ with col3:
         df_electorate = pd.read_csv(electorate_preferences_file, skiprows = 0, header = 1)
         
         electorate_pollingplaces = list(df_electorate['PPNm'].unique())
-        electorate_pollingplaces.insert(0, '* ALL *')
+        electorate_pollingplaces.insert(0, 'ALL')
         
         chosen_pollingplace = st.selectbox('Polling Place:', (electorate_pollingplaces))
-        if chosen_pollingplace != '* ALL *':
-            chosen_df = df_electorate.loc[df_electorate['PPNm'] == chosen_pollingplace]
         
-            
-df_prefdist = prefdist(chosen_df, chosen_state, chosen_electorate, chosen_pollingplace)
+with col4:
+    tiered_base = st.selectbox('Tiered?', ([True, False]))
+        
 
-plotter(chosen_df, chosen_state, chosen_electorate, chosen_pollingplace)
-
-#st.table(df_prefdist.style.format("{:,.0f}"))
-
-cell_hover = {  # for row hover use <tr> instead of <td>
-    'selector': 'td:hover',
-    'props': [('background-color', 'aqua')]
-}
-index_names = {
-    'selector': '.index_name',
-    'props': 'font-style: italic; color: darkgrey; font-weight:normal;  text-align:center'
-}
-headers = {
-    'selector': 'th:not(.index_name)',
-    'props': f'background-color: #fefefe; color: #181818; font-size: 1px; text-align:right; font-weight: bold'
-}
-s = df_prefdist.style.set_properties(**{'font-size': '6px'}).bar(subset=df_prefdist.columns, color='lightgreen') # .format("{:,.0f}")
-s.set_table_styles([cell_hover, index_names, headers])
-st.table(s.set_table_styles([cell_hover, index_names, headers]))
-
-### keep the font size very small. although it doesnt actually show up in the deployed streamlit app, it stops the columns from bunching up when there are more than 5 counts. 
+        
+twoparty_prefdist_horizontalbar_base(chosen_state, chosen_electorate, chosen_pollingplace, tiered_base)
