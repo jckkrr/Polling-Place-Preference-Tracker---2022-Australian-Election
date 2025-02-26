@@ -132,7 +132,7 @@ def twoparty_prefdist_horizontalbar_base(chosen_state, chosen_electorate, chosen
     
     df_prefdist = pd.DataFrame()
             
-    df_analysis = df_electorate.copy().loc[(df_electorate.StateAb == chosen_state) & (df_electorate.DivisionNm == chosen_electorate)] 
+    df_analysis = df_electorate.copy().loc[(df_electorate.StateAb == chosen_state) & (df_electorate.DivisionNm == chosen_electorate) & (df_electorate.PPNm == chosen_pollingplace)] 
     df_analysis['PartyAb'] = np.where(df_analysis['PartyAb'] == 'IND', 'IND' + '_' + df_analysis['Surname'].str[0:4], df_analysis['PartyAb'])
             
     parties = df_analysis['PartyAb'].unique()
